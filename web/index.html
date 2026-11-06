@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Order</title>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f5f5f5;
+            padding: 30px;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: auto;
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+        }
+
+        h2 {
+            text-align: center;
+            color: #c46b50;
+        }
+
+        .form {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        input {
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+
+        button {
+            padding: 10px 15px;
+            background: #c46b50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .actions {
+            margin-top: 15px;
+            display: flex;
+            justify-content: space-between;
+            gap: 10px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 25px;
+        }
+
+        th,
+        td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+
+        th {
+            background: #c46b50;
+            color: white;
+        }
+
+        .delete {
+            background: #dc3545;
+        }
+
+        .field {
+            display: flex;
+            flex-direction: column;
+            gap: 7px;
+        }
+
+        .field label {
+            font-size: 14px;
+            color: #555;
+        }
+
+        .quantity-currency {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="container">
+        <h2>My Order</h2>
+
+        <div class="form">
+            <div class="field">
+                <label for="item">Item</label>
+                <input id="item" placeholder="Item">
+            </div>
+
+            <div class="field">
+                <label for="itemName">Item Name</label>
+                <input id="itemName" placeholder="Item Name">
+            </div>
+
+            <div class="field">
+                <label for="price">Price</label>
+                <input id="price" type="number" placeholder="Price">
+            </div>
+
+            <div class="quantity-currency">
+                <div class="field">
+                    <label for="quantity">Quantity</label>
+                    <input id="quantity" type="number" placeholder="Quantity">
+                </div>
+
+                <div class="field">
+                    <label for="currency">Currency</label>
+                    <input id="currency" placeholder="Currency" value="USD">
+                </div>
+            </div>
+        </div>
+
+        <div class="actions">
+            <button onclick="addOrder()">Add Item to Cart</button>
+            <input id="search" placeholder="Search Item Name" oninput="searchOrder()">
+        </div>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Id</th>
+                    <th>Item</th>
+                    <th>Item Name</th>
+                    <th>Quantity</th>
+                    <th>Price</th>
+                    <th>Currency</th>
+                    
+                </tr>
+            </thead>
+
+            <tbody id="orderList"></tbody>
+        </table>
+    </div>
+
+    <script>
+
+        // Load orders from Dart Server
+        let orders = [];
+
+        async function loadOrders() {
+            try {
+                const response = await fetch('/api/orders');
+
+                if (!response.ok) {
+                    throw new Error('Cannot load orders');
+                }
+
+                orders = await response.json();
+                displayOrders(orders);
+            } catch (error) {
+                console.error(error);
+                alert('Cannot connect to Dart Server!');
+            }
+        }
+
+        // Display orders
+        function displayOrders(data) {
+            const tbody = document.getElementById('orderList');
+
+            tbody.innerHTML = '';
+
+            data.forEach((order, index) => {
+                tbody.innerHTML += `
+            <tr>
+                <td>${index + 1}</td>
+                <td>${order.Item}</td>
+                <td>${order.ItemName}</td>
+                <td>${order.Quantity}</td>
+                <td>${order.Price}</td>
+                <td>${order.Currency}</td>
+                
+            </tr>
+        `;
+            });
+        }
+
+        // Add new order
+        async function addOrder() {
+            const order = {
+                Item: document.getElementById('item').value.trim(),
+                ItemName: document.getElementById('itemName').value.trim(),
+                Price: Number(document.getElementById('price').value),
+                Quantity: Number(document.getElementById('quantity').value),
+                Currency: document.getElementById('currency').value.trim()
+            };
+
+            if (!order.Item || !order.ItemName ||
+                !order.Price || !order.Quantity || !order.Currency) {
+                alert('Please fill in all fields!');
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/orders', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(order)
+                });
+
+                if (!response.ok) {
+                    const message = await response.text();
+                    alert(message);
+                    return;
+                }
+
+                alert('Order added successfully!');
+
+                document.getElementById('item').value = '';
+                document.getElementById('itemName').value = '';
+                document.getElementById('price').value = '';
+                document.getElementById('quantity').value = '';
+
+                await loadOrders();
+
+            } catch (error) {
+                console.error(error);
+                alert('Cannot connect to Dart Server!');
+            }
+        }
+
+        // Search order by ItemName
+        function searchOrder() {
+            const keyword = document.getElementById('search')
+                .value.toLowerCase().trim();
+
+            const result = orders.filter(order =>
+                order.ItemName.toLowerCase().includes(keyword)
+            );
+
+            displayOrders(result);
+        }
+
+        // Delete order (currently only from the displayed list)
+        function deleteOrder(item) {
+            orders = orders.filter(order => order.Item !== item);
+            displayOrders(orders);
+        }
+
+        // Load data when website starts
+        loadOrders();
+
+    </script>
+
+</body>
+
+</html>

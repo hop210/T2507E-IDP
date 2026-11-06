@@ -1,0 +1,30 @@
+[
+  {
+    "Item": "A1000",
+    "ItemName": "Iphone 15",
+    "Price": 1200.0,
+    "Currency": "USD",
+    "Quantity": 1
+  },
+  {
+    "Item": "A1001",
+    "ItemName": "Iphone 16",
+    "Price": 1500.0,
+    "Currency": "USD",
+    "Quantity": 1
+  },
+  {
+    "Item": "A1002",
+    "ItemName": "Samsung S25",
+    "Price": 1000.0,
+    "Currency": "USD",
+    "Quantity": 2
+  },
+  {
+    "Item": "A1003",
+    "ItemName": "Iphone 17",
+    "Price": 1900.0,
+    "Currency": "USD",
+    "Quantity": 3
+  }
+]
